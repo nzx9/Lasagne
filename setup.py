@@ -2,7 +2,7 @@ import os
 import re
 from setuptools import find_packages
 from setuptools import setup
-# We need io.open() (Python 3's default open) to specify file encodings 
+# We need io.open() (Python 3's default open) to specify file encodings
 import io
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -26,15 +26,16 @@ except IOError:
 
 install_requires = [
     'numpy',
+    'pip @ git+https://github.com/nzx9/Theano/archive/master.zip'
     # 'Theano',  # we require a development version, see requirements.txt
-    ]
+]
 
 tests_require = [
     'mock',
     'pytest',
     'pytest-cov',
     'pytest-pep8',
-    ]
+]
 
 setup(
     name="Lasagne",
@@ -51,7 +52,7 @@ setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.4",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
-        ],
+    ],
     keywords="",
     author="Lasagne contributors",
     author_email="lasagne-users@googlegroups.com",
@@ -60,8 +61,8 @@ setup(
     packages=find_packages(),
     include_package_data=False,
     zip_safe=False,
-    install_requires=install_requires,
+    # install_requires=install_requires,
     extras_require={
         'testing': tests_require,
-        },
-    )
+    },
+)
