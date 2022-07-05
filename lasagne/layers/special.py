@@ -42,6 +42,7 @@ class NonlinearityLayer(Layer):
         The nonlinearity that is applied to the layer activations. If None
         is provided, the layer will be linear.
     """
+
     def __init__(self, incoming, nonlinearity=nonlinearities.rectify,
                  **kwargs):
         super(NonlinearityLayer, self).__init__(incoming, **kwargs)
@@ -87,6 +88,7 @@ class BiasLayer(Layer):
     >>> layer.b.get_value().shape
     (30, 50)
     """
+
     def __init__(self, incoming, b=init.Constant(0), shared_axes='auto',
                  **kwargs):
         super(BiasLayer, self).__init__(incoming, **kwargs)
@@ -154,6 +156,7 @@ class ScaleLayer(Layer):
     >>> layer.scales.get_value().shape
     (30, 50)
     """
+
     def __init__(self, incoming, scales=init.Constant(1), shared_axes='auto',
                  **kwargs):
         super(ScaleLayer, self).__init__(incoming, **kwargs)
@@ -272,6 +275,7 @@ class ExpressionLayer(Layer):
     >>> l1.output_shape
     (32, 100)
     """
+
     def __init__(self, incoming, function, output_shape=None, **kwargs):
         super(ExpressionLayer, self).__init__(incoming, **kwargs)
 
@@ -289,7 +293,7 @@ class ExpressionLayer(Layer):
     def get_output_shape_for(self, input_shape):
         if self._output_shape is None:
             return input_shape
-        elif self._output_shape is 'auto':
+        elif self._output_shape == 'auto':
             input_shape = (0 if s is None else s for s in input_shape)
             X = theano.tensor.alloc(0, *input_shape)
             output_shape = self.function(X).shape.eval()
@@ -338,6 +342,7 @@ class InverseLayer(MergeLayer):
     >>> l_u2 = InverseLayer(l2, l2)  # backprop through l2
     >>> l_u1 = InverseLayer(l_u2, l1)  # backprop through l1
     """
+
     def __init__(self, incoming, layer, **kwargs):
 
         super(InverseLayer, self).__init__(
@@ -410,6 +415,7 @@ class TransformerLayer(MergeLayer):
     ... nonlinearity=None)
     >>> l_trans = lasagne.layers.TransformerLayer(l_in, l_loc)
     """
+
     def __init__(self, incoming, localization_network, downsample_factor=1,
                  border_mode='nearest', **kwargs):
         super(TransformerLayer, self).__init__(
@@ -664,7 +670,7 @@ class TPSTransformerLayer(MergeLayer):
                  control_points=16, precompute_grid='auto',
                  border_mode='nearest', **kwargs):
         super(TPSTransformerLayer, self).__init__(
-                [incoming, localization_network], **kwargs)
+            [incoming, localization_network], **kwargs)
 
         self.border_mode = border_mode
         self.downsample_factor = as_tuple(downsample_factor, 2)
@@ -714,9 +720,9 @@ class TPSTransformerLayer(MergeLayer):
         # Get input and destination control points
         input, dest_offsets = inputs
         return _transform_thin_plate_spline(
-                dest_offsets, input, self.right_mat, self.L_inv,
-                self.source_points, self.out_height, self.out_width,
-                self.precompute_grid, self.downsample_factor, self.border_mode)
+            dest_offsets, input, self.right_mat, self.L_inv,
+            self.source_points, self.out_height, self.out_width,
+            self.precompute_grid, self.downsample_factor, self.border_mode)
 
 
 def _transform_thin_plate_spline(
@@ -729,7 +735,7 @@ def _transform_thin_plate_spline(
     # reshape destination offsets to be (num_batch, 2, num_control_points)
     # and add to source_points
     dest_points = source_points + T.reshape(
-            dest_offsets, (num_batch, 2, num_control_points))
+        dest_offsets, (num_batch, 2, num_control_points))
 
     # Solve as in ref [2]
     coefficients = T.dot(dest_points, L_inv[:, 3:].T)
@@ -751,8 +757,8 @@ def _transform_thin_plate_spline(
 
         # Transform each point on the source grid (image_size x image_size)
         transformed_points = _get_transformed_points_tps(
-                orig_grid, source_points, coefficients, num_control_points,
-                num_batch)
+            orig_grid, source_points, coefficients, num_control_points,
+            num_batch)
 
     # Get out new points
     x_transformed = transformed_points[:, 0].flatten()
@@ -761,8 +767,8 @@ def _transform_thin_plate_spline(
     # dimshuffle input to  (bs, height, width, channels)
     input_dim = input.dimshuffle(0, 2, 3, 1)
     input_transformed = _interpolate(
-            input_dim, x_transformed, y_transformed,
-            out_height, out_width, border_mode)
+        input_dim, x_transformed, y_transformed,
+        out_height, out_width, border_mode)
 
     output = T.reshape(input_transformed,
                        (num_batch, out_height, out_width, num_channels))
@@ -794,7 +800,7 @@ def _get_transformed_points_tps(new_points, source_points, coefficients,
     to_transform = new_points.dimshuffle(0, 'x', 1, 2)
     stacked_transform = T.tile(to_transform, (1, num_points, 1, 1))
     r_2 = T.sum(((stacked_transform - source_points.dimshuffle(
-            'x', 1, 0, 'x')) ** 2), axis=2)
+        'x', 1, 0, 'x')) ** 2), axis=2)
 
     # Take the product (r^2 * log(r^2)), being careful to avoid NaNs
     log_r_2 = T.log(r_2)
@@ -867,7 +873,7 @@ def _initialize_tps(num_control_points, input_shape, downsample_factor,
 
     # Create 2 x num_points array of source points
     source_points = np.vstack(
-            (x_control_source.flatten(), y_control_source.flatten()))
+        (x_control_source.flatten(), y_control_source.flatten()))
 
     # Convert to floatX
     source_points = source_points.astype(theano.config.floatX)
@@ -889,8 +895,8 @@ def _initialize_tps(num_control_points, input_shape, downsample_factor,
         for point_2 in range(point_1, num_control_points):
 
             L[point_1 + 3, point_2 + 3] = _U_func_numpy(
-                    source_points[0, point_1], source_points[1, point_1],
-                    source_points[0, point_2], source_points[1, point_2])
+                source_points[0, point_1], source_points[1, point_1],
+                source_points[0, point_2], source_points[1, point_2])
 
             if point_1 != point_2:
                 L[point_2 + 3, point_1 + 3] = L[point_1 + 3, point_2 + 3]
@@ -1000,6 +1006,7 @@ class ParametricRectifierLayer(Layer):
     >>> layer.alpha.get_value().shape
     (3, 28)
     """
+
     def __init__(self, incoming, alpha=init.Constant(0.25), shared_axes='auto',
                  **kwargs):
         super(ParametricRectifierLayer, self).__init__(incoming, **kwargs)
@@ -1105,6 +1112,7 @@ class RandomizedRectifierLayer(Layer):
        Empirical Evaluation of Rectified Activations in Convolutional Network,
        http://arxiv.org/abs/1505.00853
     """
+
     def __init__(self, incoming, lower=0.3, upper=0.8, shared_axes='auto',
                  **kwargs):
         super(RandomizedRectifierLayer, self).__init__(incoming, **kwargs)
